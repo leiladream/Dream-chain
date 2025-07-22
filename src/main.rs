@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Digest};
-use chrono::prelude::*;
+use chrono::Utc;
 use rand::Rng;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -32,12 +32,11 @@ fn calculate_hash(
     hasher.update(previous_hash);
     hasher.update(nonce.to_string());
     hasher.update(event);
-    let result = hasher.finalize();
-    hex::encode(result)
+    hex::encode(hasher.finalize())
 }
 
 fn generate_event() -> String {
-    let events = vec![
+    let events = [
         "Une étoile est née 🌟",
         "Un secret s'efface dans le vide 🌫️",
         "Une comète traverse la mémoire ☄️",
@@ -82,13 +81,10 @@ fn save_chain_to_file(chain: &Vec<Block>) {
 fn load_chain_from_file() -> Vec<Block> {
     if let Ok(file) = File::open("dream_chain.json") {
         let reader = BufReader::new(file);
-        match serde_json::from_reader(reader) {
-            Ok(chain) => chain,
-            Err(_) => {
-                println!("⚠️ Fichier JSON corrompu, nouvelle chaîne créée.");
-                Vec::new()
-            }
-        }
+        serde_json::from_reader(reader).unwrap_or_else(|_| {
+            println!("⚠️ Fichier JSON corrompu, nouvelle chaîne créée.");
+            Vec::new()
+        })
     } else {
         Vec::new()
     }
