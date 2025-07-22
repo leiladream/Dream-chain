@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dream Chain Explorer 🌙</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0c0c0c;
+      font-family: 'Courier New', monospace;
+      color: #eee;
+    }
+
+    header {
+      background: linear-gradient(to right, #1a1a1a, #333);
+      padding: 1em 2em;
+      text-align: center;
+      border-bottom: 1px solid #555;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #f9f9f9;
+    }
+
+    #blocks {
+      padding: 2em;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .block {
+      border: 1px solid #444;
+      margin-bottom: 1.5em;
+      padding: 1.2em;
+      background: #1a1a1a;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+      transition: transform 0.2s ease;
+    }
+
+    .block:hover {
+      transform: scale(1.01);
+    }
+
+    .index { color: #f39c12; font-weight: bold; }
+    .event { color: #9b59b6; margin-top: 0.5em; }
+    .data { color: #3498db; margin-top: 0.3em; }
+    .hash, .prev {
+      font-size: 0.85em;
+      color: #aaa;
+      word-wrap: break-word;
+      margin-top: 0.3em;
+    }
+
+    .nonce {
+      margin-top: 0.5em;
+      color: #2ecc71;
+    }
+
+    #event-form {
+      max-width: 800px;
+      margin: 2em auto;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    #event-form input {
+      flex: 1;
+      padding: 0.5em;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background: #111;
+      color: #fff;
+    }
+
+    #event-form button {
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 5px;
+      background: #9b59b6;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #event-form button:hover {
+      background: #8e44ad;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌙 Dream Chain Explorer</h1>
+  </header>
+
+  <section>
+    <h2 style="text-align:center;">➕ Ajouter un événement</h2>
+    <form id="event-form">
+      <input type="text" id="event" placeholder="Nom de l’événement" required />
+      <input type="text" id="data" placeholder="Données associées" required />
+      <button type="submit">Ajouter</button>
+    </form>
+  </section>
+
+  <div id="blocks"></div>
+
+  <script>
+    async function fetchChain() {
+      try {
+        const res = await fetch('/chain');
+        const chain = await res.json();
+        const container = document.getElementById('blocks');
+        container.innerHTML = ''; // Vider avant d'ajouter les blocs
+
+        chain.reverse().forEach(block => {
+          const el = document.createElement('div');
+          el.className = 'block';
+          el.innerHTML = `
+            <div><span class="index">Bloc #${block.index}</span> – <em>${block.timestamp}</em></div>
+            <div class="event">✨ ${block.event}</div>
+            <div class="data">💬 ${block.data}</div>
+            <div class="hash">🔗 Hash: ${block.hash}</div>
+            <div class="prev">⛓️ Prev: ${block.previous_hash}</div>
+            <div class="nonce">🧮 Nonce: ${block.nonce}</div>
+          `;
+          container.appendChild(el);
+        });
+      } catch (err) {
+        console.error("Erreur lors de la récupération de la blockchain :", err);
+      }
+    }
+
+    document.getElementById('event-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const event = document.getElementById('event').value;
+      const data = document.getElementById('data').value;
+
+      await fetch('/add_block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event, data })
+      });
+
+      document.getElementById('event').value = '';
+      document.getElementById('data').value = '';
+      fetchChain(); // Recharge la chaîne
+    });
+
+    fetchChain(); // Chargement initial
+  </script>
+</body>
+</html>
